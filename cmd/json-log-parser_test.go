@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/stretchr/testify/assert"
 	"strings"
 	"testing"
 )
@@ -21,4 +22,27 @@ func BenchmarkLogPrintingWithBuilder(b *testing.B) {
 		formatLog(builder, sampleLog)
 		builder.Reset()
 	}
+}
+
+func TestParseSeverity(t *testing.T) {
+	var scenarios = map[string]Severity{
+		"":            unknown,
+		"sdfdfsdfsfd": unknown,
+		"unknown":     unknown,
+		"trace":       trace,
+		"TRACE":       trace,
+		"debug":       debug,
+		"DEBUG":       debug,
+		"info":        info,
+		"INFO":        info,
+		"warn":        warn,
+		"WARN":        warn,
+		"error":       err,
+		"ERROR":       err,
+	}
+
+	for desc := range scenarios {
+		assert.Equal(t, scenarios[desc], parseSeverity(desc))
+	}
+
 }
