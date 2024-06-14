@@ -1,5 +1,5 @@
 # Overview
-This tool is a command line app which parses json logs produced by a Java application and formats it as a plain text.
+This tool is a command line app which parses json logs produced by a Java application and outputs them formatted as a plain text.
 
 This tool is useful when investigating logs without requiring 3rd party tooling like (Google Cloud logs or Kibana). 
 This is especially useful when trying to read/investigate exceptions as it formats the stacktraces over multiple lines.
@@ -53,7 +53,7 @@ Example formatted plain text log line output by the tool:
 ```
 
 # Future work
-- support for logging java mdc (mapped diagnostic context
+- support for logging java mdc (mapped diagnostic context)
 - support other languages / json log formats
 - allow output format to be customised
 - further log filtering
