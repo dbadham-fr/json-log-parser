@@ -1,10 +1,10 @@
 package main
 
 import (
+	"bufio"
 	"encoding/json"
 	"flag"
 	"fmt"
-	"io"
 	"log"
 	"os"
 	"strings"
@@ -45,7 +45,7 @@ func main() {
 	if minSeverity == unknown {
 		fmt.Println("Invalid level value supplied.")
 		flag.Usage()
-		return
+		os.Exit(1)
 	}
 
 	reader := createInputFile()
@@ -53,21 +53,24 @@ func main() {
 	writer := createOutputFile()
 	defer writer.Close()
 
-	dec := json.NewDecoder(reader)
 	logBuilder := &strings.Builder{}
-	for {
+	scanner := bufio.NewScanner(reader)
+	for scanner.Scan() {
 		var v map[string]interface{}
+		var dec = json.NewDecoder(strings.NewReader(scanner.Text()))
 		if err := dec.Decode(&v); err != nil {
-			if err != io.EOF {
-				log.Fatalln("Failed to process json", err)
-			}
-			return
+			// Skip decode errors - these indicate that lines are not valid json (logs may contain noise)
+			continue
 		}
 		if matchesFilter(v) {
 			formatLog(logBuilder, v)
 			fmt.Fprintln(writer, logBuilder.String())
 			logBuilder.Reset()
 		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		log.Fatal(err)
 	}
 }
 
@@ -108,8 +111,25 @@ func parseSeverity(description string) Severity {
 }
 
 func matchesFilter(json map[string]interface{}) bool {
+	return looksLikeLogMessageFilter(json) && matchesSeverityFilter(json)
+}
+
+func matchesSeverityFilter(json map[string]interface{}) bool {
 	severity := parseSeverity(json["level"].(string))
 	return severity == unknown || severity.weight >= minSeverity.weight
+}
+
+var logMessageMandatoryFields = []string{"timestamp", "level", "message"}
+
+// looksLikeLogMessageFilter
+// This filter sanity checks that the parsed JSON looks like a log message, this is useful when logs contain raw JSON
+func looksLikeLogMessageFilter(json map[string]interface{}) bool {
+	for i := range logMessageMandatoryFields {
+		if _, in := json[logMessageMandatoryFields[i]]; !in {
+			return false
+		}
+	}
+	return true
 }
 
 func formatLog(builder *strings.Builder, v map[string]interface{}) {
