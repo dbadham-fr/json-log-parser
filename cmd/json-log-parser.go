@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"strings"
@@ -36,7 +37,7 @@ var (
 	outFlag   = flag.String("out", "", "output file to write the parsed logs to - if not supplied then stdout is used")
 )
 
-var minSeverity = info
+var minSeverity = debug
 
 func main() {
 	flag.Parse()
@@ -53,6 +54,10 @@ func main() {
 	writer := createOutputFile()
 	defer writer.Close()
 
+	parseLog(reader, writer)
+}
+
+func parseLog(reader io.Reader, writer io.Writer) {
 	logBuilder := &strings.Builder{}
 	scanner := bufio.NewScanner(reader)
 	for scanner.Scan() {
